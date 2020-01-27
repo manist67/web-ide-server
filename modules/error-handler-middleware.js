@@ -1,8 +1,6 @@
 function errorHandler(err, req, res, next) {
-	res.status(500).send({
-		msg: "에러가 나부렸다리",
-		code: "500"
-	});
+	console.log(err);
+	res.status(err.status).send(error);
 }
 
 module.exports = errorHandler;

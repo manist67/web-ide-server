@@ -6,22 +6,37 @@ var express = require('express');
 var router = express.Router();
 
 var fc = require('../modules/file-controller');
+var db = require('../modules/db-connection-pool');
 
-var login = require('../modules/check-login-middleware');
-router.use(login.checkLogin);
+const sql = require('../sql');
+
+/**
+ * project 객체 생김세 
+ * {
+ * 		id: 0, 
+ * 		name:"프로젝트 5",
+ *  	language: "c",
+ * 		createdAt: "2020-01-27T14:35:13.000Z",
+ * 		files?: []
+ * },
+ */
 
 router.get("/", async function(req, res) {
-	/*
-		TODO: 프로젝트 리스트
-	*/
-
-	res.send(result);
+	const [rows] = await db.query(sql.selectProjects, []);
+	res.send(rows);
 });
 
 router.get("/:projectId", async function(req, res) {
-	/*
-		TODO: 프로젝트 정보
-	*/
+	const id = parseInt(req.params.projectId);
+
+	const [rows] = await db.query(sql.selectProjectById, [id]);
+	
+	if(rows.length !== 1) return; // TODO: error exception
+
+	const result = rows[0];
+	result.files = await fc.readFiles(result.path, true, false);
+
+	res.send(result);
 });
 
 router.get("/:projectId/:path*", async function(req, res) {

@@ -29,6 +29,7 @@ async function isUnzipped(filePath) {
 
 /**
  * 파일 목록을 읽을 때 사용하는 함수
+ * @param {string} _startPath
  * @param {String} _filePath 
  * @param {Boolean} readSubDir 서브 디렉토리 읽을지 여부
  * @returns {Array}
@@ -75,6 +76,7 @@ async function readFileInfo(_filePath, {readSubDir, onlyDirs, buffer}=defaultOpt
 	file["regDate"] = stat.birthtime;
 
 	if(stat.isDirectory()) {
+		file["isDirectory"] = true;
 		file["ext"] = "dir";
 		file["attr"] = "dir";
 
@@ -83,7 +85,9 @@ async function readFileInfo(_filePath, {readSubDir, onlyDirs, buffer}=defaultOpt
 		return file;
 	} else if(!onlyDirs) {
 		file["attr"] = "normal";
-		file["ext"] = path.extname(filePath);
+		file["ext"] = path.extname(filePath).split(".")[1];
+		file["data"] = await fs.readFile(filePath, 'utf-8');
+
 		if(buffer) file["buffer"] = await fs.readFile(filePath);
 		
 		switch(file["ext"]) { // 확장자에 따른 추가 정보 
