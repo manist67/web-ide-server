@@ -12,6 +12,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
+var login = require('./modules/check-login-middleware');
+app.use(login.injectUser);
 // ROUTER 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');

@@ -17,6 +17,7 @@ router.get("/", async function(req, res) {
 
 	res.send(result);
 });
+
 router.get("/:projectId", async function(req, res) {
 	/*
 		TODO: 프로젝트 정보
@@ -40,6 +41,7 @@ router.get("/:projectId/:path*", async function(req, res) {
 
 
 router.post("/", function(req, res, next) {
+
 	/*
 		TODO: 프로젝트 생성
 	*/
