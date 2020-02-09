@@ -7,6 +7,7 @@ var router = express.Router();
 
 var fc = require('../modules/file-controller');
 var db = require('../modules/db-connection-pool');
+var randomString = require('../modules/random-string');
 
 const sql = require('../sql');
 
@@ -22,19 +23,26 @@ const sql = require('../sql');
  */
 
 router.get("/", async function(req, res) {
-	const [rows] = await db.query(sql.selectProjects, []);
+	const [rows] = await db.query(sql.projects.selectProjects, []);
 	res.send(rows);
 });
 
 router.get("/:projectId", async function(req, res) {
 	const id = parseInt(req.params.projectId);
 
-	const [rows] = await db.query(sql.selectProjectById, [id]);
+	const [rows] = await db.query(sql.projects.selectProjectById, [id]);
 	
-	if(rows.length !== 1) return; // TODO: error exception
+	if(rows.length !== 1) res.send(404); // TODO: error exception
 
 	const result = rows[0];
-	result.files = await fc.readFiles(result.path, true, false);
+	try {
+		result.files = await fc.readFiles(result.path, true, false);
+	} catch(e) {
+		res.status(500).send({
+			type: "NoFiles", message: "파일이 존재하지 않습니다."
+		});
+		return;
+	}
 
 	res.send(result);
 });
@@ -55,11 +63,32 @@ router.get("/:projectId/:path*", async function(req, res) {
 });
 
 
-router.post("/", function(req, res, next) {
+router.post("/", async function(req, res, next) {
+	const { id } = req.user;
+	const { name, category } = req.body;
+	const random_path = randomString(20);
 
-	/*
-		TODO: 프로젝트 생성
-	*/
+	if(!name) { res.status(400).send({ type: "NoBody", message: "name이 없습니다."}); return; }
+	if(!category) { res.status(400).send({ type: "NoBody", message: "category가 없습니다."}); return; }
+
+	try { 
+		await fc.createDirectory(random_path);
+	} catch(e) {
+		res.status(500).send(e);
+	}
+
+	let result;
+	try {
+		[ result ] = await db.query(sql.projects.insertProject, [id, name, category, random_path]);
+	} catch(e) {
+		console.log(e);
+		res.status(500).send({
+			type: "DBConnection", message: "데이터 베이스 접속 실패"
+		});
+		return;
+	}
+
+	res.send({ id: result.insertId });
 });
 
 router.post("/:projectId/:path*", upload.single("file"), function(req, res, next) {
@@ -166,6 +195,7 @@ router.delete("/:projectId/:path*", async function(req, res, next) {
 
 	res.send({msg: "성공"});
 });
+
 
 
 module.exports = router;
