@@ -1,7 +1,3 @@
-// multipart/form-data 처리를 위한 의존성
-var multer = require('multer');
-var upload = multer();
-
 var express = require('express');
 var router = express.Router();
 
@@ -22,42 +18,50 @@ const sql = require('../sql');
  * },
  */
 
+/**
+ * req.project에 project를 삽입해주는 api
+ * @param {Request} req 
+ * @param {Response} res 
+ */
+async function getProject(req, res, next) {
+	const projectId = parseInt(req.params.projectId);
+	let project;
+	try {
+		const [ rows ] = await db.query(sql.projects.selectProjectById, [projectId]);
+		if(rows.length !== 1) {
+			res.status(404).send({type: "NoData", message: "프로젝트가 존재하지 않습니다."}); 
+			return;
+		}
+		project = rows[0];
+	} catch(e) {
+		res.status(500).send({ type: "NoFiles", message: "파일이 존재하지 않습니다." });
+		return;
+	}
+
+	req.project = project;
+	next();
+}
+
 router.get("/", async function(req, res) {
 	const [rows] = await db.query(sql.projects.selectProjects, []);
 	res.send(rows);
 });
 
-router.get("/:projectId", async function(req, res) {
-	const id = parseInt(req.params.projectId);
-
-	const [rows] = await db.query(sql.projects.selectProjectById, [id]);
-	
-	if(rows.length !== 1) res.send(404); // TODO: error exception
-
-	const result = rows[0];
+router.get("/:projectId", getProject, async function(req, res) {
 	try {
-		result.files = await fc.readFiles(result.path, true, false);
+		result.files = await fc.readFiles(req.project.path, true, false);
+		console.log(req.project.path);
 	} catch(e) {
-		res.status(500).send({
-			type: "NoFiles", message: "파일이 존재하지 않습니다."
-		});
+		res.status(500).send({ type: "NoFiles", message: "파일이 존재하지 않습니다." });
 		return;
 	}
 
 	res.send(result);
 });
 
-router.get("/:projectId/:path*", async function(req, res) {
-	// queries 
-	const { files, dirs } = req.query;
-	
-	// TODO: 프로젝트 가져오기
-	const projectId = req.params.projectId;
-
-	// 입력받은 path
+router.get("/:projectId/:path*", getProject, async function(req, res) {
 	const path = req.params.path + req.params[0];
-	
-	const result = await fc.readFileInfo(path, { readSubDir: files === "true", onlyDirs: dirs === "true"});
+	const result = await fc.readFileInfo([req.project.path, path], { readSubDir: files === "true", onlyDirs: dirs === "true"});
 	
 	res.send(result);
 });
@@ -75,6 +79,7 @@ router.post("/", async function(req, res, next) {
 		await fc.createDirectory(random_path);
 	} catch(e) {
 		res.status(500).send(e);
+		return;
 	}
 
 	let result;
@@ -82,24 +87,19 @@ router.post("/", async function(req, res, next) {
 		[ result ] = await db.query(sql.projects.insertProject, [id, name, category, random_path]);
 	} catch(e) {
 		console.log(e);
-		res.status(500).send({
-			type: "DBConnection", message: "데이터 베이스 접속 실패"
-		});
+		res.status(500).send({ type: "DBConnection", message: "데이터 베이스 접속 실패" });
 		return;
 	}
 
 	res.send({ id: result.insertId });
 });
 
-router.post("/:projectId/:path*", upload.single("file"), function(req, res, next) {
-	// TODO: 프로젝트 가져오기
-	const projectId = req.params.projectId;
-
+router.post("/:projectId/:path*", getProject, function(req, res, next) {
 	if(req.query.type == "file") { postFile(req, res, next); return; } // 파일 업로드일 시 다음 hanlder로 넘김
 	if(req.query.type == "directory") { postDirectory(req, res, next); return; } // 디렉토리일 시 파일 생성
 
 	// 이외의 경우 404 status 를 response 해준다.
-	// TODO: error exception
+	res.status(404).send({ type: "NoData", message: "파일이 존재하지 않습니다." });
 });
 
 async function postFile(req, res, next) {
@@ -149,9 +149,9 @@ async function postDirectory(req, res, next) {
 /**
  * 프로젝트 변경
  */
-router.put("/:projectId", async function(req, res) {
-	// TODO: 프로젝트 가져오기
-	const projectId = req.params.projectId;
+router.put("/:projectId", getProject,async function(req, res) {
+	// TODO
+	res.send({});
 });
 
 /**
@@ -182,9 +182,8 @@ router.delete("/:projectId", async function(req, res, next) {
 /**
  * 파일을 삭제한다.
  */
-router.delete("/:projectId/:path*", async function(req, res, next) {
+router.delete("/:projectId/:path*",getProject, async function(req, res, next) {
 	// TODO: 프로젝트 가져오기
-	const projectId = req.params.projectId;
 	const path = req.params.path + req.params[0];
 
 	try {
