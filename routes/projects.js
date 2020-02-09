@@ -4,6 +4,7 @@ var router = express.Router();
 var fc = require('../modules/file-controller');
 var db = require('../modules/db-connection-pool');
 var randomString = require('../modules/random-string');
+var path = require('path');
 
 const sql = require('../sql');
 
@@ -49,23 +50,15 @@ router.get("/", async function(req, res) {
 
 router.get("/:projectId", getProject, async function(req, res) {
 	try {
-		result.files = await fc.readFiles(req.project.path, true, false);
 		console.log(req.project.path);
+		req.project.files = await fc.readFiles(req.project.path, true, false);
 	} catch(e) {
 		res.status(500).send({ type: "NoFiles", message: "파일이 존재하지 않습니다." });
 		return;
 	}
 
-	res.send(result);
+	res.send(req.project);
 });
-
-router.get("/:projectId/:path*", getProject, async function(req, res) {
-	const path = req.params.path + req.params[0];
-	const result = await fc.readFileInfo([req.project.path, path], { readSubDir: files === "true", onlyDirs: dirs === "true"});
-	
-	res.send(result);
-});
-
 
 router.post("/", async function(req, res, next) {
 	const { id } = req.user;
@@ -94,7 +87,7 @@ router.post("/", async function(req, res, next) {
 	res.send({ id: result.insertId });
 });
 
-router.post("/:projectId/:path*", getProject, function(req, res, next) {
+router.post("/:projectId", getProject, function(req, res, next) {
 	if(req.query.type == "file") { postFile(req, res, next); return; } // 파일 업로드일 시 다음 hanlder로 넘김
 	if(req.query.type == "directory") { postDirectory(req, res, next); return; } // 디렉토리일 시 파일 생성
 
@@ -102,47 +95,30 @@ router.post("/:projectId/:path*", getProject, function(req, res, next) {
 	res.status(404).send({ type: "NoData", message: "파일이 존재하지 않습니다." });
 });
 
-async function postFile(req, res, next) {
-	// 입력받은 path
-	let dest = "";
-	if(req.params.path)
-		dest = req.params.path + req.params[0];
-
+async function postFile(req, res) {
+	const { data, name, path } = req.body;
 	try {
-		await fc.saveFile(req.file.buffer, dest, req.file.originalname);
-		res.send({
-			msg: "성공적으로 저장되었습니다.",
-			code: 1
-		});
+		await fc.saveFile(data, req.project.path, path, name);
+		res.send({ msg: "성공적으로 저장되었습니다." });
 	} catch(e) {
-		next(e); return;
+		console.log(e);
+		res.status(500).send({ type: "FileWrite", message: "파일 작성 실패" });
 	}
 }
 
-async function postDirectory(req, res, next) {
+async function postDirectory(req, res) {
 	// 입력받은 path
-	let dest = "";
-	if(req.params.path)
-		dest = req.params.path + req.params[0];
-
-	if(!dest) {
-		// 경로가 존재하지 않을 경우 404 오류를 발송한다
-		res.status(404).send({
-			msg: "목적지 없음",
-			code: -1
-		});
-		return;
-	}
-
+	const { name, path } = req.body;
 	try {
-		await fc.createDirectory(dest);
+		await fc.createDirectory(req.project.path, path, name);
 
 		res.send({
 			msg: "성공적으로 생성되었습니다.",
 			code: 1
 		});
 	} catch(e) {
-		next(e); return;
+		console.log(e);
+		res.status(500).send({ type: "FileWrite", message: "폴더 생성 실패" });
 	}
 }
 
@@ -182,7 +158,7 @@ router.delete("/:projectId", async function(req, res, next) {
 /**
  * 파일을 삭제한다.
  */
-router.delete("/:projectId/:path*",getProject, async function(req, res, next) {
+router.delete("/:projectId/:path*", getProject, async function(req, res, next) {
 	// TODO: 프로젝트 가져오기
 	const path = req.params.path + req.params[0];
 

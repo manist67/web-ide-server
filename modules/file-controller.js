@@ -101,14 +101,15 @@ async function readFileInfo(_filePath, {readSubDir, onlyDirs, buffer}=defaultOpt
 
 /**
  * 파일 저장을 위한 함수
- * @param {Object} data 데이터 버퍼
+ * @param {string} data 데이터
+ * @param {String} projectPath 프로젝트의 주소
  * @param {String} filePath 목적 주소
  * @throws {Object} 파일 생성 실패시 error exception
  * code	-100 하위 path가 디렉토리가 아닌 경우
  * code -101 파일 / 디렉토리가 존재하는 경우
  */
-async function saveFile(data, filePath, name) {
-	const targetPath = path.resolve(ROOT, filePath, name);
+async function saveFile(data, projectPath, filePath, name) {
+	const targetPath = path.resolve(ROOT, projectPath, filePath, name);
 	if(_fs.existsSync(targetPath)) {
 		throw { code: -101, msg: "파일이 존재합니다", path: targetPath};
 	}
@@ -124,34 +125,26 @@ async function saveFile(data, filePath, name) {
 
 /**
  * 디렉토리 생성 함수
- * @param {String} _path
+ * @param {String} projectPath
+ * @param {String} filePath
+ * @param {String} name
  * @throws {Object} 파일 생성 실패시 error exception
  * code	-100 하위 path가 디렉토리가 아닌 경우
  * 		-101 파일 / 디렉토리가 존재하는 경우
  */
-async function createDirectory(_path) {
-	const targetPath = path.resolve(ROOT, _path);
+async function createDirectory(projectPath, filePath, name) {
+	const targetPath = path.resolve(ROOT, projectPath, filePath, name);
 	if(_fs.existsSync(targetPath)) {
 		throw { code: -101, msg: "파일이 존재합니다", path: targetPath};
 	}
 
-	const paths = _path.split("/");
-	for(let i = 0 ; i < paths.length; i++) {
-		const currentPath = paths.filter((e, idx) => idx <= i).reduce((prev, curr) => path.resolve(prev, curr), ROOT);
-
-		let stat;
-		try {
-			stat = await fs.stat(currentPath);
-		} catch(e) {
-			if(e.errno === -2) {// 파일이 존재하지 않으면 파일 생성 후 하위 파일을 다시 생성한다.
-				fs.mkdir(currentPath); continue;
-			} else throw(e); // 이외의 상황이면 error를 던진다.
-		}
-
-		if(!stat.isDirectory()) {
-			throw { code: -100, msg: "디렉토리가 아닙니다.", path: currentPath }
-		}
-	}
+	await (new Promise((resolve, reject) => {
+		mkdirp(targetPath, (err) => {
+			if(err) { reject(err); return; }
+			resolve();
+		});
+	}));
+	
 }
 
 /**
