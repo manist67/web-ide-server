@@ -163,9 +163,10 @@ router.delete("/:projectId/:path*", getProject, async function(req, res, next) {
 	const path = req.params.path + req.params[0];
 
 	try {
-		await fc.removeFile(path, req.body.name);
+		await fc.removeFile(req.project.path, path);
 	} catch(e) {
-		next(e); return;
+		console.log(e);
+		res.status(500).send({ type: "FileWrite", message: "파일 삭제 실패" });
 	}
 
 	res.send({msg: "성공"});

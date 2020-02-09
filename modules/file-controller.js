@@ -189,11 +189,12 @@ function sortFiles(files) {
 
 /**
  * 파일을 trash폴더에 넣는다.
+ * @param { String } projectPath
  * @param { String } _filePath
  */
-async function removeFile(_filePath) {
-	const filePath = path.resolve(ROOT, _filePath);
-	let trashPath = path.resolve(TRASH, _filePath);
+async function removeFile(projectPath, _filePath) {
+	const filePath = path.resolve(ROOT, projectPath, _filePath);
+	let trashPath = path.resolve(TRASH, projectPath, _filePath);
 
 	if(!_fs.existsSync(filePath)) {
 		throw { code: -102, msg: "파일이 존재하지 않습니다", path: _filePath};
@@ -216,9 +217,7 @@ async function removeFile(_filePath) {
 
 	// 하위 폴더 구조 생성
 	const dir = path.dirname(trashPath);
-	mkdirp(dir, () => {
-		fs.rename(filePath, trashPath);
-	});
+	mkdirp(dir, () => { fs.rename(filePath, trashPath); });
 }
 
 /**
