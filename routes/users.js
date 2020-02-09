@@ -7,7 +7,8 @@ var sql = require('../sql');
 
 
 /**
- * 해당 user의 lecture들만 조회한다.
+ * 해당 user의 lecture들만 조회한다. 
+ * 이때 lecture_users의 enabled 값도 같이 줘야함
  * 이때 자기 id혹은 관리자일 경우는 조회에 성공하고 (status: 200)
  * 아닐경우에 403번 error
  */
