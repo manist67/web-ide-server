@@ -30,9 +30,9 @@ router.get("/:lecture_id*", async function (req, res) {
             error: "강의를 조회할 수 없습니다."
         });
         return;
-    } else {
-        res.send(rows);
-    }
+    } 
+
+    res.send(rows);
 });
 
 /**

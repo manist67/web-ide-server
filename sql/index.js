@@ -10,8 +10,7 @@ module.exports = {
 	insertLectures_admin : "insert into lectures (title, description, season_year, season_quarter, lecture_type, major, class_number,class_name, score, professor) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
 	selectLectures_admin : "select * from users where username = ?",
 	
- 
-	/* Insert task */
 	insertProject: "insert into projects (user_id, name, discription, path) values( ?, ?, ?, ? )",
-	insertUser: "insert into users (username, password, studentNumber, name) values ( ?, ?, ?, ? )"
- };
+	selectLectures: "select * from lectures",
+	updateEnable: "update users_lectures set enabled = 0 where user_id = ? and lecture_id = ?"
+};
