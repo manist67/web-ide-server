@@ -2,9 +2,8 @@ var express = require('express');
 var router = express.Router();
 
 // router.get('/', function(req, res) {});
-var pool = require('../modules/db-connection-pool');
+var db = require('../modules/db-connection-pool');
 var sql = require('../sql');
-
 
 /**
  * 해당 user의 lecture들만 조회한다. 
@@ -12,7 +11,7 @@ var sql = require('../sql');
  * 이때 자기 id혹은 관리자일 경우는 조회에 성공하고 (status: 200)
  * 아닐경우에 403번 error
  */
-router.get("/:user_id/lectures", function(req, res) { 
+router.get("/:user_id/lectures", async function(req, res) { 
 
 });
 
@@ -22,13 +21,21 @@ router.get("/:user_id/lectures", function(req, res) {
  * users_lectures_id가 없을 경우 404error
  * users_lectures_id가 이미 enabled: true 된 경우 false로 바꿔준다.
  */
-router.put("/:user_id/lectures/:lecture_id", function(req, res) {
-
+router.put("/:user_id/lectures/:lecture_id", async function(req, res) {
+	var userID = req.params.user_id;
+	var lectureID = req.params.lecture_id;
+	const [rows] = await db.query(sql.updateEnable, [userID, lectureID]);
+	
+	console.log(rows);
+	res.send({
+		code: 100,
+		msg: "등록 성공"
+	});
 });
 
 router.post('/', async function(req, res) {
 	const { username, password, studentNumber, name } = req.body;
-	const conn = await pool.getConnection(async conn => conn);
+	const conn = await db.getConnection(async conn => conn);
 	await conn.query(sql.insertUser, [username, password, studentNumber, name]);
 
 	res.send({
