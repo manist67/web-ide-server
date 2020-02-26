@@ -17,16 +17,12 @@ app.use(login.injectUser);
 
 // ROUTER 
 var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
 var projectsRouter = require('./routes/projects');
 var authRouter = require('./routes/auth');
-var lectureRouter = require('./routes/lectures');
 
 app.use('/', indexRouter);
-app.use('/users', usersRouter);
 app.use('/auth', authRouter);
 app.use('/projects', projectsRouter);
-app.use('/lectures', lectureRouter);
 
 
 // ERROR HANDLER

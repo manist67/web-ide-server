@@ -4,8 +4,6 @@ var router = express.Router();
 var fc = require('../modules/file-controller');
 var db = require('../modules/db-connection-pool');
 var randomString = require('../modules/random-string');
-var path = require('path');
-
 const sql = require('../sql');
 
 /**
@@ -88,11 +86,22 @@ router.post("/", async function(req, res, next) {
 });
 
 router.post("/:projectId", getProject, function(req, res, next) {
-	if(req.query.type == "file") { postFile(req, res, next); return; } // 파일 업로드일 시 다음 hanlder로 넘김
-	if(req.query.type == "directory") { postDirectory(req, res, next); return; } // 디렉토리일 시 파일 생성
+	const { type } = req.query;
 
-	// 이외의 경우 404 status 를 response 해준다.
-	res.status(404).send({ type: "NoData", message: "파일이 존재하지 않습니다." });
+	switch(type) {
+		case "file":
+			postFile(req, res);
+			break;
+		case "directory":
+			postDirectory(req, res);
+			break;
+		case "delete":
+			break;
+		case "modify":
+			break;
+		default:
+			res.status(404).send({ type: "NotFound", message: "파일이 존재하지 않습니다." });
+	}
 });
 
 async function postFile(req, res) {
@@ -122,6 +131,13 @@ async function postDirectory(req, res) {
 	}
 }
 
+async function modifyFile(req, res) {
+	const { path, name } = req.body;
+
+	await fc.renameFile(path, name);
+	res.send({msg: "성공"});
+}
+
 /**
  * 프로젝트 변경
  */
@@ -131,47 +147,19 @@ router.put("/:projectId", getProject,async function(req, res) {
 });
 
 /**
- * 파일 이름 변경
- */
-router.put("/:projectId/:path*", async function(req, res, next) {
-	// TODO: 프로젝트 가져오기
-	const projectId = req.params.projectId;
-
-	const path = req.params.path + req.params[0];
-
-	await fc.renameFile(path, req.body.name);
-	res.send({msg: "성공"});
-});
-
-/**
  * 프로젝트 삭제
  */
-router.delete("/:projectId", async function(req, res, next) {
-	// TODO: 프로젝트 가져오기
-	const projectId = req.params.projectId;
-
-	/**
-	 * TODO: project 삭제
-	 */
+router.delete("/:projectId", getProject, async function(req, res, next) {
+	// TODO
+	res.send({});
 });
+
 
 /**
- * 파일을 삭제한다.
+ * 프로젝트 컴파일 및 실행
  */
-router.delete("/:projectId/:path*", getProject, async function(req, res, next) {
-	// TODO: 프로젝트 가져오기
-	const path = req.params.path + req.params[0];
-
-	try {
-		await fc.removeFile(req.project.path, path);
-	} catch(e) {
-		console.log(e);
-		res.status(500).send({ type: "FileWrite", message: "파일 삭제 실패" });
-	}
-
+router.patch("/:projectId/", getProject, async function(req, res) {
 	res.send({msg: "성공"});
 });
-
-
 
 module.exports = router;
