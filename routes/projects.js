@@ -99,6 +99,9 @@ router.post("/:projectId", getProject, function(req, res, next) {
 			break;
 		case "modify":
 			break;
+		case "rename":
+			renameFile(req, res);
+			break;
 		default:
 			res.status(404).send({ type: "NotFound", message: "파일이 존재하지 않습니다." });
 	}
@@ -131,7 +134,7 @@ async function postDirectory(req, res) {
 	}
 }
 
-async function modifyFile(req, res) {
+async function renameFile(req, res) {
 	const { path, name } = req.body;
 
 	await fc.renameFile(path, name);
