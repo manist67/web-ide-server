@@ -4,7 +4,10 @@ var router = express.Router();
 var fc = require('../modules/file-controller');
 var db = require('../modules/db-connection-pool');
 var randomString = require('../modules/random-string');
+var compiler = require('../modules/compile-run');
+
 const sql = require('../sql');
+
 
 /**
  * project 객체 생김세 
@@ -172,11 +175,35 @@ router.delete("/:projectId", getProject, async function(req, res, next) {
 });
 
 
-/**
- * 프로젝트 컴파일 및 실행
- */
-router.patch("/:projectId/", getProject, async function(req, res) {
-	res.send({msg: "성공"});
-});
+router.compile = function(io) {
+	io.on('connection', function(socket) {
+		socket.on('compile', async function(data) {
+			const projectId = parseInt(data.projectId);
+			let project;
+			try {
+				const [ rows ] = await db.query(sql.projects.selectProjectById, [projectId]);
+				if(rows.length === 0) socket.emit("projectInfo", null);
+				project = rows[0];
+			} catch(e) {
+				socket.emit("projectInfo", null);
+				return;
+			}
+			
+			socket.emit("projectInfo", project);
+
+			const docker = compiler.run(project.path, project.category);
+			console.log(docker);
+
+			function emitter(data) {
+				socket.emit("result", { line: data ? data.toString() : data });
+			}
+
+			docker.stdout.on("data", emitter);
+			docker.stdout.on("end", emitter);
+			docker.stderr.on("data", emitter);
+			docker.stderr.on("end", emitter);
+		});
+	});
+}
 
 module.exports = router;

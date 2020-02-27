@@ -2,9 +2,12 @@ var express = require('express');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var cors = require('cors');
+var io = require('socket.io')
 require('dotenv').config();
 
 var app = express();
+app.io = io();
+app.io.set('origins', '*:*');
 
 app.use(cors());
 app.use(logger('dev'));
@@ -23,6 +26,8 @@ var authRouter = require('./routes/auth');
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/projects', projectsRouter);
+projectsRouter.compile(app.io);
+
 
 
 // ERROR HANDLER
