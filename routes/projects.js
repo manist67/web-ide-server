@@ -48,7 +48,6 @@ router.get("/", async function(req, res) {
 
 router.get("/:projectId", getProject, async function(req, res) {
 	try {
-		console.log(req.project.path);
 		req.project.files = await fc.readFiles(req.project.path, true, false);
 	} catch(e) {
 		res.status(500).send({ type: "NoFiles", message: "파일이 존재하지 않습니다." });
@@ -98,6 +97,7 @@ router.post("/:projectId", getProject, function(req, res, next) {
 		case "delete":
 			break;
 		case "modify":
+			modifyFile(req, res);
 			break;
 		case "rename":
 			renameFile(req, res);
@@ -132,6 +132,20 @@ async function postDirectory(req, res) {
 		console.log(e);
 		res.status(500).send({ type: "FileWrite", message: "폴더 생성 실패" });
 	}
+}
+
+async function modifyFile(req, res) {
+	const { data, path } = req.body;
+
+	try {
+		await fc.modifyFile(data, path);
+	} catch(e) {
+		console.log(e);
+		res.status(500).send({});
+		return;
+	}
+
+	res.status(200).send({});
 }
 
 async function renameFile(req, res) {

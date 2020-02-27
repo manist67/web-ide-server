@@ -108,8 +108,9 @@ async function readFileInfo(_filePath, {readSubDir, onlyDirs, buffer}=defaultOpt
  * code	-100 하위 path가 디렉토리가 아닌 경우
  * code -101 파일 / 디렉토리가 존재하는 경우
  */
-async function saveFile(data, projectPath, filePath, name) {
-	const targetPath = path.resolve(ROOT, projectPath, filePath, name);
+async function saveFile(data, filePath, name) {
+	const targetPath = path.resolve(ROOT, filePath, name);
+
 	if(_fs.existsSync(targetPath)) {
 		throw { code: -101, msg: "파일이 존재합니다", path: targetPath};
 	}
@@ -119,6 +120,26 @@ async function saveFile(data, projectPath, filePath, name) {
 	} catch(e) {
 		if(e.code != -101) throw(e); // 디렉토리가 존재하는 오류 이외에는 error throw해준다.
 	}
+
+	await fs.writeFile(targetPath, data, "binary");
+}
+
+/**
+ * 
+ * @param {} projectPath 
+ * @param {*} filePath 
+ * @param {*} name 
+ */
+async function modifyFile(data, filePath) {
+	const targetPath = path.resolve(ROOT, filePath);
+
+	let stat;
+	try {
+		stat = await fs.stat( targetPath );
+	} catch(e) {
+		throw { code: -102, msg: "파일이 존재하지 않습니다", path: _filePath};
+	}
+	if(stat.isDirectory()) throw { code: -101, msg: "디렉토리는 수정 불가능합니다.", path: targetPath};
 
 	await fs.writeFile(targetPath, data, "binary");
 }
@@ -250,6 +271,7 @@ module.exports = {
 	readFiles,
 	readFileInfo,
 	saveFile,
+	modifyFile,
 	createDirectory,
 	renameFile,
 	removeFile,
