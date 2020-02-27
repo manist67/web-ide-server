@@ -8,3 +8,5 @@ docker build -t java-compile-run:1.0 ./java/build_run
 docker build -t c-compile-run:1.0 ./c/build_run
 # sudo docker build -t c-build:1.0 ./c/build
 # sudo docker build -t c-run:1.0 ./c/run
+
+docker build -t cpp-lint:1.0 ./lint

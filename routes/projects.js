@@ -210,6 +210,44 @@ router.compile = function(io) {
 			docker.stdout.on("end", emitFinish);
 			docker.stderr.on("end", emitFinish);
 		});
+
+
+		socket.on('lint', async function(data) {
+			const projectId = parseInt(data.projectId);
+			let project;
+			try {
+				const [ rows ] = await db.query(sql.projects.selectProjectById, [projectId]);
+				if(rows.length === 0) socket.emit("lintProjectInfo", null);
+				project = rows[0];
+			} catch(e) {
+				socket.emit("lintProjectInfo", null);
+				return;
+			}
+			
+			socket.emit("lintProjectInfo", project);
+
+			const docker = compiler.cpplint(project.path, project.category);
+			if(!docker) { 
+				socket.emit("result", { isEnd : true });
+				return;
+			}
+
+			let outputEnd = false;
+			
+			function emitter(data) {
+				socket.emit("result", { line: data ? data.toString("utf-8") : data });
+			}
+
+			function emitFinish() {
+				if(outputEnd) socket.emit("result", { isEnd : true });
+				if(!outputEnd) outputEnd = true;
+			}
+
+			docker.stdout.on("data", emitter);
+			docker.stderr.on("data", emitter);
+			docker.stdout.on("end", emitFinish);
+			docker.stderr.on("end", emitFinish);
+		});
 	});
 }
 
