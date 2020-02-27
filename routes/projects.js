@@ -177,6 +177,17 @@ router.delete("/:projectId", getProject, async function(req, res, next) {
 
 router.compile = function(io) {
 	io.on('connection', function(socket) {
+		let outputEnd = false;
+		
+		function emitter(data) {
+			socket.emit("result", { line: data ? data.toString("utf-8") : data });
+		}
+
+		function emitFinish() {
+			if(outputEnd) socket.emit("result", { isEnd : true });
+			if(!outputEnd) outputEnd = true;
+		}
+
 		socket.on('compile', async function(data) {
 			const projectId = parseInt(data.projectId);
 			let project;
@@ -192,18 +203,6 @@ router.compile = function(io) {
 			socket.emit("projectInfo", project);
 
 			const docker = compiler.run(project.path, project.category);
-			console.log(docker);
-
-			let outputEnd = false;
-			
-			function emitter(data) {
-				socket.emit("result", { line: data ? data.toString("utf-8") : data });
-			}
-
-			function emitFinish() {
-				if(outputEnd) socket.emit("result", { isEnd : true });
-				if(!outputEnd) outputEnd = true;
-			}
 
 			docker.stdout.on("data", emitter);
 			docker.stderr.on("data", emitter);
@@ -230,17 +229,6 @@ router.compile = function(io) {
 			if(!docker) { 
 				socket.emit("result", { isEnd : true });
 				return;
-			}
-
-			let outputEnd = false;
-			
-			function emitter(data) {
-				socket.emit("result", { line: data ? data.toString("utf-8") : data });
-			}
-
-			function emitFinish() {
-				if(outputEnd) socket.emit("result", { isEnd : true });
-				if(!outputEnd) outputEnd = true;
 			}
 
 			docker.stdout.on("data", emitter);
