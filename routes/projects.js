@@ -194,14 +194,21 @@ router.compile = function(io) {
 			const docker = compiler.run(project.path, project.category);
 			console.log(docker);
 
+			let outputEnd = false;
+			
 			function emitter(data) {
-				socket.emit("result", { line: data ? data.toString() : data });
+				socket.emit("result", { line: data ? data.toString("utf-8") : data });
+			}
+
+			function emitFinish() {
+				if(outputEnd) socket.emit("result", { isEnd : true });
+				if(!outputEnd) outputEnd = true;
 			}
 
 			docker.stdout.on("data", emitter);
-			docker.stdout.on("end", emitter);
 			docker.stderr.on("data", emitter);
-			docker.stderr.on("end", emitter);
+			docker.stdout.on("end", emitFinish);
+			docker.stderr.on("end", emitFinish);
 		});
 	});
 }
