@@ -45,7 +45,7 @@ async function getProject(req, res, next) {
 }
 
 router.get("/", async function(req, res) {
-	const [rows] = await db.query(sql.projects.selectProjects, []);
+	const [rows] = await db.query(sql.projects.selectProjects, [req.user.id]);
 	res.send(rows);
 });
 
