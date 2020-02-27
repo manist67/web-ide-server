@@ -6,6 +6,7 @@ var mkdirp = require('mkdirp');
 
 const ROOT = process.env.ROOT_PATH;
 const TRASH = process.env.TRASH_PATH
+const BOILERPLATES = process.env.BOILERPLATE_PATH
 
 /**
  * zip파일이 압축이 해제됐는지 확인하는 함수
@@ -155,6 +156,7 @@ async function modifyFile(data, filePath) {
  */
 async function createDirectory(projectPath, filePath, name) {
 	const targetPath = path.resolve(ROOT, projectPath, filePath, name);
+	console.log(targetPath);
 	if(_fs.existsSync(targetPath)) {
 		throw { code: -101, msg: "파일이 존재합니다", path: targetPath};
 	}
@@ -266,6 +268,29 @@ function copyFile(_filePath, dest) {
 	})
 }
 
+/**
+ * 보일러플레이트 생성
+ * @param {String} projectPath 
+ * @param {String} language
+ */
+
+function createProject(projectPath, language) {
+	console.log({ROOT, projectPath,BOILERPLATES, language})
+	const destPath = path.resolve(ROOT, projectPath);
+	const filePath = path.resolve(BOILERPLATES, language);
+	
+
+	if(!_fs.existsSync(filePath)) {
+		throw { code: -102, msg: "파일이 존재하지 않습니다", path: _filePath};
+	}
+
+	if(_fs.existsSync(destPath)) {
+		throw { code: -101, msg: "파일이 존재합니다", path: _filePath};
+	}
+	
+	// 하위 폴더 구조 생성
+	fse.copy(filePath, destPath);
+}
 
 module.exports = {
 	readFiles,
@@ -276,5 +301,6 @@ module.exports = {
 	renameFile,
 	removeFile,
 	copyFile,
-	sortFiles
+	sortFiles,
+	createProject
 };

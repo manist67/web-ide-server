@@ -61,7 +61,7 @@ router.get("/:projectId", getProject, async function(req, res) {
 });
 
 router.post("/", async function(req, res, next) {
-	const { id } = req.user;
+	const { id } = req.user || { id: 0 };
 	const { name, category } = req.body;
 	const random_path = randomString(20);
 
@@ -69,7 +69,7 @@ router.post("/", async function(req, res, next) {
 	if(!category) { res.status(400).send({ type: "NoBody", message: "category가 없습니다."}); return; }
 
 	try { 
-		await fc.createDirectory(random_path);
+		await fc.createProject(random_path, category);
 	} catch(e) {
 		res.status(500).send(e);
 		return;
