@@ -22,11 +22,13 @@ app.use(login.injectUser);
 var indexRouter = require('./routes/index');
 var projectsRouter = require('./routes/projects');
 var authRouter = require('./routes/auth');
+var reportsRouter = require('./routes/reports');
 
 app.use('/', indexRouter);
 app.use('/auth', authRouter);
 app.use('/projects', projectsRouter);
 projectsRouter.compile(app.io);
+app.use('/reports', reportsRouter);
 
 
 
