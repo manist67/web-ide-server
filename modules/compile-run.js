@@ -37,6 +37,8 @@ const getProblemDocker = (source, category) => {
 
     let filename;
     switch(category) {
+        case "java":
+            filename = "Main.java"; break;
         case "cpp": 
             filename = "main.cpp"; break;
         case "c": default:
@@ -52,6 +54,9 @@ const getProblemDocker = (source, category) => {
 
     let docker;
     switch(category) {
+        case "java":
+            docker = spawn("docker", ["run", "--rm", "-i", "-v", `${tempPath}:/src`, "java-problem-run:1.0"]);;
+            break;
         case "cpp":
             docker = spawn("docker", ["run", "--rm", "-i", "-v", `${tempPath}:/src`, "cpp-problem-run:1.0"]);;
             break;
