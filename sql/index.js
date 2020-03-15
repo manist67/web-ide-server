@@ -7,5 +7,6 @@ module.exports = {
 		on users_report.reports_id = reports.id
 		where users_report.user_id = ?
 		order by limitdate desc`,
+	selectTestCaseByProblemId: `select id, input_example as input, output_example as output from testCases where problem = ?`,
 	updateReportsWithProjectId: 'update users_report set project_id = ? where id = ?'
 };

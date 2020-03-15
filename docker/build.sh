@@ -1,12 +1,10 @@
 #!/bin/bash
 
 docker build -t java-compile-run:1.0 ./java/build_run
-# sudo docker build -t java-build:1.0 ./java/build
-# sudo docker build -t java-run:1.0 ./java/run
-
 
 docker build -t c-compile-run:1.0 ./c/build_run
-# sudo docker build -t c-build:1.0 ./c/build
-# sudo docker build -t c-run:1.0 ./c/run
+docker build -t c-problem-run:1.0 ./c/problem
+
+docker build -t cpp-problem-run:1.0 ./cpp/problem
 
 docker build -t cpp-lint:1.0 ./lint
