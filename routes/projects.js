@@ -180,12 +180,16 @@ router.compile = function(io) {
 		let outputEnd = false;
 		
 		function emitter(data) {
+			console.log(data.toString("utf-8"))
 			socket.emit("result", { line: data ? data.toString("utf-8") : data });
 		}
 
-		function emitFinish() {
-			if(outputEnd) socket.emit("result", { isEnd : true });
-			if(!outputEnd) outputEnd = true;
+		function emitFinish(socket) {
+			return () => {
+				if(outputEnd) socket.emit("result", { isEnd : true });
+				if(!outputEnd) outputEnd = true;
+				socket.disconnect();
+			}
 		}
 
 		socket.on('compile', async function(data) {
@@ -204,10 +208,15 @@ router.compile = function(io) {
 
 			const docker = compiler.run(project.path, project.category);
 
+			socket.on("input", (data) => {
+				const { input } = data;
+
+				docker.stdin.write(input, () => {docker.stdin.end()});
+			});
+
 			docker.stdout.on("data", emitter);
 			docker.stderr.on("data", emitter);
-			docker.stdout.on("end", emitFinish);
-			docker.stderr.on("end", emitFinish);
+			docker.on("close", emitFinish(socket));
 		});
 
 
@@ -233,8 +242,7 @@ router.compile = function(io) {
 
 			docker.stdout.on("data", emitter);
 			docker.stderr.on("data", emitter);
-			docker.stdout.on("end", emitFinish);
-			docker.stderr.on("end", emitFinish);
+			docker.stdout.on("end", emitFinish(socket));
 		});
 	});
 }
