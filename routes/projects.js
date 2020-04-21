@@ -53,6 +53,7 @@ router.get("/:projectId", getProject, async function(req, res) {
 	try {
 		req.project.files = await fc.readFiles(req.project.path, true, false);
 	} catch(e) {
+		console.warn(e);
 		res.status(500).send({ type: "NoFiles", message: "파일이 존재하지 않습니다." });
 		return;
 	}
@@ -112,6 +113,7 @@ router.post("/:projectId", getProject, function(req, res, next) {
 
 async function postFile(req, res) {
 	const { data, name, path } = req.body;
+
 	try {
 		await fc.saveFile(data, req.project.path, path, name);
 		res.send({ msg: "성공적으로 저장되었습니다." });
@@ -141,7 +143,7 @@ async function modifyFile(req, res) {
 	const { data, path } = req.body;
 
 	try {
-		await fc.modifyFile(data, path);
+		await fc.modifyFile(data, req.project.path, path);
 	} catch(e) {
 		console.log(e);
 		res.status(500).send({});

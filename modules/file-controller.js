@@ -69,8 +69,8 @@ async function readFileInfo(_filePath, {readSubDir, onlyDirs, buffer}=defaultOpt
 	} catch(e) {
 		throw { code: -102, msg: "파일이 존재하지 않습니다", path: _filePath};
 	}
-	const file = {path: _filePath};
-
+	const file = {path: _filePath.slice(_filePath.indexOf('/') + 1)};
+	console.log(file);
 	// 파일 사이즈
 	file["size"] = stat.size;
 	file["name"] = _filePath ? path.basename(filePath) : "";
@@ -109,20 +109,14 @@ async function readFileInfo(_filePath, {readSubDir, onlyDirs, buffer}=defaultOpt
  * code	-100 하위 path가 디렉토리가 아닌 경우
  * code -101 파일 / 디렉토리가 존재하는 경우
  */
-async function saveFile(data, filePath, name) {
-	const targetPath = path.resolve(ROOT, filePath, name);
+async function saveFile(data, filePath, subpath, name) {
+	const targetPath = path.resolve(ROOT, filePath, subpath, name);
 
 	if(_fs.existsSync(targetPath)) {
 		throw { code: -101, msg: "파일이 존재합니다", path: targetPath};
 	}
 
-	try {
-		if(filePath !== "") await createDirectory(filePath);
-	} catch(e) {
-		if(e.code != -101) throw(e); // 디렉토리가 존재하는 오류 이외에는 error throw해준다.
-	}
-
-	await fs.writeFile(targetPath, data, "binary");
+	await fs.writeFile(targetPath, data, "utf-8");
 }
 
 /**
@@ -131,8 +125,8 @@ async function saveFile(data, filePath, name) {
  * @param {*} filePath 
  * @param {*} name 
  */
-async function modifyFile(data, filePath) {
-	const targetPath = path.resolve(ROOT, filePath);
+async function modifyFile(data, subpath, filePath) {
+	const targetPath = path.resolve(ROOT, subpath, filePath);
 
 	let stat;
 	try {
