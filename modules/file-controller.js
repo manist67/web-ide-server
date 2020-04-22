@@ -69,7 +69,7 @@ async function readFileInfo(_filePath, {readSubDir, onlyDirs, buffer}=defaultOpt
 	} catch(e) {
 		throw { code: -102, msg: "파일이 존재하지 않습니다", path: _filePath};
 	}
-	const file = {path: _filePath.slice(_filePath.indexOf('/') + 1)};
+	const file = {path: _filePath.slice(_filePath.indexOf(path.sep) + 1)};
 	console.log(file);
 	// 파일 사이즈
 	file["size"] = stat.size;
